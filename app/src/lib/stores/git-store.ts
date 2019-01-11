@@ -63,7 +63,6 @@ import {
   revSymmetricDifference,
   getSymbolicRef,
   getConfigValue,
-  abortMerge,
 } from '../git'
 import { RetryAction, RetryActionType } from '../../models/retry-actions'
 import { UpstreamAlreadyExistsError } from './upstream-already-exists-error'
@@ -1139,11 +1138,6 @@ export class GitStore extends BaseStore {
         theirBranch: branch,
       },
     })
-  }
-
-  /** Abort the merge against the current repository */
-  public abortMerge(): Promise<void> {
-    return this.withErrorHandling(() => abortMerge(this.repository))
   }
 
   /** Changes the URL for the remote that matches the given name  */
