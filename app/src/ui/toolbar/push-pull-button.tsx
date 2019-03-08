@@ -49,14 +49,7 @@ interface IPushPullButtonProps {
   readonly rebaseInProgress: boolean
 }
 
-function renderAheadBehind(
-  progress: Progress | null,
-  aheadBehind: IAheadBehind | null
-) {
-  if (aheadBehind === null || progress !== null) {
-    return null
-  }
-
+function renderAheadBehind(aheadBehind: IAheadBehind) {
   const { ahead, behind } = aheadBehind
   if (ahead === 0 && behind === 0) {
     return null
@@ -96,11 +89,7 @@ function renderLastFetched(lastFetched: Date | null): JSX.Element | string {
   }
 }
 
-function progressButton(
-  progress: Progress,
-  networkActionInProgress: boolean,
-  aheadBehind: IAheadBehind | null
-) {
+function progressButton(progress: Progress, networkActionInProgress: boolean) {
   return (
     <ToolbarButton
       title={progress.title}
@@ -112,9 +101,7 @@ function progressButton(
       style={ToolbarButtonStyle.Subtitle}
       tooltip={progress ? progress.description : undefined}
       disabled={true}
-    >
-      {renderAheadBehind(progress, aheadBehind)}
-    </ToolbarButton>
+    />
   )
 }
 
@@ -194,7 +181,7 @@ function fetchButton(
       style={ToolbarButtonStyle.Subtitle}
       onClick={onClick}
     >
-      {renderAheadBehind(null, aheadBehind)}
+      {renderAheadBehind(aheadBehind)}
     </ToolbarButton>
   )
 }
@@ -220,7 +207,7 @@ function pullButton(
       style={ToolbarButtonStyle.Subtitle}
       onClick={onClick}
     >
-      {renderAheadBehind(null, aheadBehind)}
+      {renderAheadBehind(aheadBehind)}
     </ToolbarButton>
   )
 }
@@ -242,7 +229,7 @@ function pushButton(
       style={ToolbarButtonStyle.Subtitle}
       onClick={onClick}
     >
-      {renderAheadBehind(null, aheadBehind)}
+      {renderAheadBehind(aheadBehind)}
     </ToolbarButton>
   )
 }
@@ -281,7 +268,7 @@ export class PushPullButton extends React.Component<IPushPullButtonProps, {}> {
     } = this.props
 
     if (progress !== null) {
-      return progressButton(progress, networkActionInProgress, aheadBehind)
+      return progressButton(progress, networkActionInProgress)
     }
 
     if (remoteName === null) {
