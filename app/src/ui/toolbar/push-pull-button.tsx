@@ -84,7 +84,7 @@ function renderAheadBehind(
   return <div className="ahead-behind">{content}</div>
 }
 
-function renderProgressButton(
+function progressButton(
   progress: Progress,
   networkActionInProgress: boolean,
   aheadBehind: IAheadBehind | null
@@ -106,20 +106,102 @@ function renderProgressButton(
   )
 }
 
-function getActionLabel(
-  { ahead, behind }: IAheadBehind,
+function publishRepositoryButton(onClick: () => void) {
+  return (
+    <ToolbarButton
+      title="Publish repository"
+      description="Publish this repository to GitHub"
+      className="push-pull-button"
+      icon={OcticonSymbol.cloudUpload}
+      style={ToolbarButtonStyle.Subtitle}
+      onClick={onClick}
+    >
+      {renderAheadBehind(null, null)}
+    </ToolbarButton>
+  )
+}
+
+function unbornRepositoryButton() {
+  return (
+    <ToolbarButton
+      title="Publish branch"
+      description="Cannot publish unborn HEAD"
+      className="push-pull-button"
+      icon={OcticonSymbol.cloudUpload}
+      style={ToolbarButtonStyle.Subtitle}
+      disabled={true}
+    >
+      {renderAheadBehind(null, null)}
+    </ToolbarButton>
+  )
+}
+
+function detachedHeadButton(rebaseInProgress: boolean) {
+  const description = rebaseInProgress
+    ? 'Rebase in progress'
+    : 'Cannot publish detached HEAD'
+
+  return (
+    <ToolbarButton
+      title="Publish branch"
+      description={description}
+      className="push-pull-button"
+      icon={OcticonSymbol.cloudUpload}
+      style={ToolbarButtonStyle.Subtitle}
+      disabled={true}
+    >
+      {renderAheadBehind(null, null)}
+    </ToolbarButton>
+  )
+}
+
+function publishBranchButton(isGitHub: boolean, onClick: () => void) {
+  const description = isGitHub
+    ? 'Publish this branch to GitHub'
+    : 'Publish this branch to the remote'
+
+  return (
+    <ToolbarButton
+      title="Publish branch"
+      description={description}
+      className="push-pull-button"
+      icon={OcticonSymbol.cloudUpload}
+      style={ToolbarButtonStyle.Subtitle}
+      onClick={onClick}
+    >
+      {renderAheadBehind(null, null)}
+    </ToolbarButton>
+  )
+}
+
+function fetchButton(
   remoteName: string,
-  pullWithRebase?: boolean
+  aheadBehind: IAheadBehind,
+  lastFetched: Date | null,
+  onClick: () => void
 ) {
-  if (behind > 0) {
-    return pullWithRebase && enablePullWithRebase()
-      ? `Pull ${remoteName} with rebase`
-      : `Pull ${remoteName}`
-  }
-  if (ahead > 0) {
-    return `Push ${remoteName}`
-  }
-  return `Fetch ${remoteName}`
+  const title = `Fetch ${remoteName}`
+
+  const description = lastFetched ? (
+    <span>
+      Last fetched <RelativeTime date={lastFetched} />
+    </span>
+  ) : (
+    'Never fetched'
+  )
+
+  return (
+    <ToolbarButton
+      title={title}
+      description={description}
+      className="push-pull-button"
+      icon={OcticonSymbol.sync}
+      style={ToolbarButtonStyle.Subtitle}
+      onClick={onClick}
+    >
+      {renderAheadBehind(null, aheadBehind)}
+    </ToolbarButton>
+  )
 }
 
 /**
@@ -127,21 +209,58 @@ function getActionLabel(
  * repository.
  */
 export class PushPullButton extends React.Component<IPushPullButtonProps, {}> {
-  public render() {
-    const { progress, networkActionInProgress, aheadBehind } = this.props
+  private publish = () => {
+    this.props.dispatcher.push(this.props.repository)
+  }
 
-    if (progress) {
-      return renderProgressButton(
-        progress,
-        networkActionInProgress,
-        aheadBehind
-      )
+  private fetch = () => {
+    this.props.dispatcher.fetch(
+      this.props.repository,
+      FetchType.UserInitiatedTask
+    )
+  }
+
+  public render() {
+    const {
+      progress,
+      networkActionInProgress,
+      aheadBehind,
+      remoteName,
+      repository,
+      tipState,
+      rebaseInProgress,
+      lastFetched,
+    } = this.props
+
+    if (progress !== null) {
+      return progressButton(progress, networkActionInProgress, aheadBehind)
+    }
+
+    if (remoteName === null) {
+      return publishRepositoryButton(this.publish)
+    }
+
+    if (tipState === TipState.Unborn) {
+      return unbornRepositoryButton()
+    }
+
+    if (tipState === TipState.Detached) {
+      return detachedHeadButton(rebaseInProgress)
+    }
+
+    if (aheadBehind === null) {
+      const isGitHub = !!repository.gitHubRepository
+      return publishBranchButton(isGitHub, this.publish)
+    }
+
+    const { ahead, behind } = aheadBehind
+
+    if (ahead === 0 && behind === 0) {
+      return fetchButton(remoteName, aheadBehind, lastFetched, this.fetch)
     }
 
     const title = this.getTitle()
-
     const description = this.getDescription(this.props.tipState)
-
     const networkActive = networkActionInProgress
 
     // if we have a remote associated with this repository, we should enable this branch
@@ -173,18 +292,27 @@ export class PushPullButton extends React.Component<IPushPullButtonProps, {}> {
   }
 
   private getTitle(): string {
-    if (!this.props.remoteName) {
+    const { pullWithRebase, remoteName, aheadBehind } = this.props
+
+    if (!remoteName) {
       return 'Publish repository'
     }
-    if (!this.props.aheadBehind) {
+    if (!aheadBehind) {
       return 'Publish branch'
     }
 
-    return getActionLabel(
-      this.props.aheadBehind,
-      this.props.remoteName,
-      this.props.pullWithRebase
-    )
+    const { ahead, behind } = aheadBehind
+
+    if (behind > 0) {
+      return pullWithRebase && enablePullWithRebase()
+        ? `Pull ${remoteName} with rebase`
+        : `Pull ${remoteName}`
+    }
+
+    if (ahead > 0) {
+      return `Push ${remoteName}`
+    }
+    return `Fetch ${remoteName}`
   }
 
   private getIcon(): OcticonSymbol {
