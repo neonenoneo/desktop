@@ -128,18 +128,21 @@ function getActionLabel(
  */
 export class PushPullButton extends React.Component<IPushPullButtonProps, {}> {
   public render() {
-    const progress = this.props.progress
+    const { progress, networkActionInProgress, aheadBehind } = this.props
 
-    const title = progress ? progress.title : this.getTitle()
+    if (progress) {
+      return renderProgressButton(
+        progress,
+        networkActionInProgress,
+        aheadBehind
+      )
+    }
 
-    const description = progress
-      ? progress.description || 'Hang on…'
-      : this.getDescription(this.props.tipState)
+    const title = this.getTitle()
 
-    const progressValue = progress ? progress.value : undefined
+    const description = this.getDescription(this.props.tipState)
 
-    const networkActive =
-      this.props.networkActionInProgress || !!this.props.progress
+    const networkActive = networkActionInProgress
 
     // if we have a remote associated with this repository, we should enable this branch
     // when the tip is valid (no detached HEAD, no unborn repository)
@@ -157,50 +160,16 @@ export class PushPullButton extends React.Component<IPushPullButtonProps, {}> {
       <ToolbarButton
         title={title}
         description={description}
-        progressValue={progressValue}
         className="push-pull-button"
         icon={this.getIcon()}
-        iconClassName={this.props.networkActionInProgress ? 'spin' : ''}
+        iconClassName={networkActionInProgress ? 'spin' : ''}
         style={ToolbarButtonStyle.Subtitle}
         onClick={this.performAction}
-        tooltip={progress ? progress.description : undefined}
         disabled={disabled}
       >
-        {this.renderAheadBehind()}
+        {renderAheadBehind(progress, aheadBehind)}
       </ToolbarButton>
     )
-  }
-
-  private renderAheadBehind() {
-    if (!this.props.aheadBehind || this.props.progress) {
-      return null
-    }
-
-    const { ahead, behind } = this.props.aheadBehind
-    if (ahead === 0 && behind === 0) {
-      return null
-    }
-
-    const content: JSX.Element[] = []
-    if (ahead > 0) {
-      content.push(
-        <span key="ahead">
-          {ahead}
-          <Octicon symbol={OcticonSymbol.arrowSmallUp} />
-        </span>
-      )
-    }
-
-    if (behind > 0) {
-      content.push(
-        <span key="behind">
-          {behind}
-          <Octicon symbol={OcticonSymbol.arrowSmallDown} />
-        </span>
-      )
-    }
-
-    return <div className="ahead-behind">{content}</div>
   }
 
   private getTitle(): string {
