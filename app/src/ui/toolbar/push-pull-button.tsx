@@ -55,7 +55,7 @@ function renderAheadBehind(aheadBehind: IAheadBehind) {
     return null
   }
 
-  const content: JSX.Element[] = []
+  const content = new Array<JSX.Element>()
   if (ahead > 0) {
     content.push(
       <span key="ahead">
