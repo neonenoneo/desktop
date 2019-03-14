@@ -19,7 +19,11 @@ import {
   setGenericPassword,
   setGenericUsername,
 } from '../../lib/generic-git-auth'
-import { isGitRepository, RebaseResult } from '../../lib/git'
+import {
+  isGitRepository,
+  RebaseResult,
+  RebaseProgressOptions,
+} from '../../lib/git'
 import { isGitOnPath } from '../../lib/is-git-on-path'
 import {
   rejectOAuthRequest,
@@ -627,7 +631,8 @@ export class Dispatcher {
   public async rebase(
     repository: Repository,
     baseBranch: string,
-    targetBranch: string
+    targetBranch: string,
+    progress?: RebaseProgressOptions
   ) {
     const stateBefore = this.repositoryStateManager.get(repository)
 
@@ -642,7 +647,8 @@ export class Dispatcher {
     const result = await this.appStore._rebase(
       repository,
       baseBranch,
-      targetBranch
+      targetBranch,
+      progress
     )
 
     await this.appStore._loadStatus(repository)
