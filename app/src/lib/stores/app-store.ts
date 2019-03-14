@@ -138,7 +138,6 @@ import {
   abortRebase,
   continueRebase,
   rebase,
-  RebaseProgressOptions,
 } from '../git'
 import {
   installGlobalLFSFilters,
@@ -195,6 +194,7 @@ import {
 import { BranchPruner } from './helpers/branch-pruner'
 import { enableBranchPruning, enablePullWithRebase } from '../feature-flag'
 import { Banner, BannerType } from '../../models/banner'
+import { RebaseProgressOptions } from '../../models/rebase'
 
 /**
  * As fast-forwarding local branches is proportional to the number of local
