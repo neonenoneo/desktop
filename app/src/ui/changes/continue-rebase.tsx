@@ -21,9 +21,12 @@ export class ContinueRebase extends React.Component<IContinueRebaseProps, {}> {
   }
 
   private async continueRebase() {
+    const { manualResolutions } = this.props.rebaseConflictState
+
     await this.props.dispatcher.continueRebase(
       this.props.repository,
-      this.props.workingDirectory
+      this.props.workingDirectory,
+      manualResolutions
     )
   }
 
